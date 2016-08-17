@@ -1,0 +1,7 @@
+{
+  "name": "Es.Splay",
+  "packages":[
+    ["NUnit","2.6.4"],
+    ["CH.Combinatorics","1.0.2","net40"]
+  ]
+}

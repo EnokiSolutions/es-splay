@@ -1,0 +1,9 @@
+{
+  "refs":[
+  "Es.Splay",
+  "nunit.framework",
+  "CH.Combinatorics",
+  "System",
+  "System.Core"
+  ]
+}
