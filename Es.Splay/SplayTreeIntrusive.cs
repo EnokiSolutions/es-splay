@@ -14,7 +14,7 @@ namespace Es.Splay
         where TN : SplayTreeIntrusive<TN,TV>.Node,new()
     {
         private const int MaxRecursionDepth = 80;
-        public Node Root { get; private set; }
+        public Node Root { get; internal set; }
 
 #if DEBUG
         internal Guid TreeGuid = Guid.NewGuid();

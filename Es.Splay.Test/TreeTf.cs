@@ -13,6 +13,36 @@ namespace Es.Splay.Test
     [ExcludeFromCodeCoverage]
     internal sealed class TreeTf
     {
+        private sealed class DataNode : SplayTreeIntrusive<DataNode, DataNode.ScoreData>.Node
+        {
+            public string Name;
+            public ScoreData Score;
+
+            public sealed class ScoreData : IComparable<ScoreData>
+            {
+                public long Value;
+                public long Uid;
+                public int CompareTo(ScoreData other)
+                {
+                    var c = Value.CompareTo(other.Value);
+                    if (c != 0)
+                        return c;
+
+                    c = Uid.CompareTo(other.Uid);
+                    Debug.Assert(c != 0);
+                    return c;
+                }
+
+                public ScoreData(long value) : this(value, 0L){}
+
+                public ScoreData(long value, long uid)
+                {
+                    Value = value;
+                    Uid = uid;
+                }
+            }
+        }
+
         private sealed class Data : IComparable<Data>
         {
             public string Name;
@@ -81,6 +111,71 @@ namespace Es.Splay.Test
             {
                 var r = q.Left==null || q.Left != p;
                 p = q;
+                return r;
+            });
+        }
+
+
+        [Test]
+        public void TestComplexRemoveCaseIntrusive()
+        {
+            var t = new SplayTreeIntrusive<DataNode,DataNode.ScoreData>();
+            var zL = new DataNode
+            {
+                Name = "zL",
+                Score = new DataNode.ScoreData(1,2)
+            };
+            var uR = new DataNode
+            {
+                Name = "uR",
+                Score = new DataNode.ScoreData(4,3)
+            };
+            var u = new DataNode {
+                Name = "u",
+                Score = new DataNode.ScoreData(3,4),
+                RightCount = 1,
+                Right = uR
+            };
+            var o = new DataNode
+            {
+                Name = "o",
+                Score = new DataNode.ScoreData(5,5),
+                LeftCount = 2,
+                Left = u
+            };
+            var zR = new DataNode
+            {
+                Name = "zR", 
+                Score = new DataNode.ScoreData(6,6),
+                LeftCount = 3,
+                Left = o
+            };
+            var z = new DataNode
+            {
+                Name = "z",
+                Score = new DataNode.ScoreData(2,1),
+                LeftCount = 1,
+                RightCount = 4,
+                Left = zL,
+                Right = zR
+            };
+            zL.Parent = z;
+            zR.Parent = z;
+            uR.Parent = u;
+            u.Parent = o;
+            o.Parent = zR;
+
+            t.Root = z;
+            t.Count = 6;
+            t.Remove(z);
+            t.Validate();
+
+            // handle an odd traverse case here as well.
+            DataNode p = null;
+            t.Traverse(t.Root, q =>
+            {
+                var r = q.Left == null || q.Left != p;
+                p = (DataNode)q;
                 return r;
             });
         }
