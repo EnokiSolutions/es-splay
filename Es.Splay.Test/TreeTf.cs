@@ -182,13 +182,14 @@ namespace Es.Splay.Test
         public void TestEdgeCases()
         {
             var t = new SplayTree<Data>();
+
             var s = t.ToString(); // doesn't throw on empty tree 
             t.Prune(0);
             t.Prune(-1);
             t.Balance();
             Assert.AreEqual(0,t.NearBy(new Data(), 1, 1).Count());
-            Assert.Throws<Exception>(() => t.Worst());
-            Assert.Throws<Exception>(() => t.Best());
+            Assert.Throws<InvalidOperationException>(() => t.Worst());
+            Assert.Throws<InvalidOperationException>(() => t.Best());
 
 
             var data = new Data { Name = "z", Score = 2 };
@@ -223,6 +224,55 @@ namespace Es.Splay.Test
             Assert.Throws<Exception>(() => t.ForwardOrderTraverse(data, _ => true));
             Assert.Throws<Exception>(() => t.ReverseOrderTraverse(o.Data, _ => true));
         }
+
+        [Test]
+        public void TestIntrusiveEdgeCases()
+        {
+            var tc = new SplayTreeViaIntrusive<Data>();
+            var t = tc as ISplayTree<Data>;
+            var s = t.ToString(); // doesn't throw on empty tree 
+            t.Prune(0);
+            t.Prune(-1);
+            t.Balance();
+            Assert.AreEqual(0, t.NearBy(new Data(), 1, 1).Count());
+            Assert.Throws<InvalidOperationException>(() => t.Worst());
+            Assert.Throws<InvalidOperationException>(() => t.Best());
+
+
+            var data = new Data { Name = "z", Score = 2 };
+            var zL = new SplayTreeViaIntrusive<Data>.Node(new Data { Name = "zL", Score = 1 });
+            var o = new SplayTreeViaIntrusive<Data>.Node(new Data { Name = "o", Score = 5 })
+            {
+                LeftCount = 1,
+            };
+            var zR = new SplayTreeViaIntrusive<Data>.Node(new Data { Name = "zR", Score = 6 })
+            {
+                LeftCount = 3,
+                Left = o
+            };
+            var z = new SplayTreeViaIntrusive<Data>.Node(data)
+            {
+                LeftCount = 1,
+                RightCount = 4,
+                Left = zL,
+                Right = zR
+            };
+            zL.Parent = z;
+            zR.Parent = z;
+            o.Parent = zR;
+
+            o.Left = z; // cycle
+
+            tc.Root = z;
+            tc.Count = 3;
+            s = t.ToString();
+            Console.WriteLine(s);
+            Assert.That(s.Contains("CYCLE"));
+            tc.Traverse(z, _ => false);
+            Assert.Throws<Exception>(() => t.ForwardOrderTraverse(data, _ => true));
+            Assert.Throws<Exception>(() => t.ReverseOrderTraverse(o.Value, _ => true));
+        }
+
 
         [Test]
         public void TestGetEnumerator()
@@ -459,6 +509,7 @@ namespace Es.Splay.Test
                 t.Validate();
                 t.Add(dx(104));
                 t.Validate();
+                Assert.Throws<InvalidOperationException>(()=>t.Add(dx(104)));
                 t.Add(dx(105));
                 t.Validate();
 

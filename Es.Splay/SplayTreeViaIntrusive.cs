@@ -8,9 +8,9 @@ namespace Es.Splay
     // Example of using Intrusive, and usefull for testing Intrusive using the same tests as the <T> style tree.
     public sealed class SplayTreeViaIntrusive<T> : ISplayTreeIntrusive<SplayTreeViaIntrusive<T>.Node, T>, ISplayTree<T> where T:IComparable<T>
     {
-        private readonly ISplayTreeIntrusive<Node, T> _t = new SplayTreeIntrusive<Node, T>();
+        private readonly SplayTreeIntrusive<Node, T> _t = new SplayTreeIntrusive<Node, T>();
 
-        private sealed class Node : SplayTreeIntrusive<Node, T>.Node
+        internal sealed class Node : SplayTreeIntrusive<Node, T>.Node
         {
             internal Node(T value)
             {
@@ -194,7 +194,11 @@ namespace Es.Splay
             return true;
         }
 
-        int ICollection<T>.Count => _t.Count;
+        public int Count
+        {
+            get { return _t.Count; }
+            set { _t.Count = value; }
+        }
 
         bool ICollection<T>.IsReadOnly => false;
 
@@ -204,6 +208,12 @@ namespace Es.Splay
         }
 
         int ISplayTreeIntrusive<Node, T>.Count => _t.Count;
+
+        internal Node Root
+        {
+            get { return (Node) _t.Root; }
+            set { _t.Root = value; }
+        }
 
         bool ISplayTreeIntrusive<Node, T>.Contains(T item)
         {
@@ -218,6 +228,16 @@ namespace Es.Splay
         void ISplayTreeIntrusive<Node, T>.CopyTo(Node[] array, int arrayIndex)
         {
             _t.CopyTo(array, arrayIndex);
+        }
+
+        internal void Traverse(Node node, Func<Node, bool> func)
+        {
+            _t.Traverse(node, n=>func((Node)n));
+        }
+
+        public override string ToString()
+        {
+            return _t.ToString();
         }
     }
 }

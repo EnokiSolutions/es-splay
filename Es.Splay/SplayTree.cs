@@ -234,12 +234,7 @@ namespace Es.Splay
             }
             else
             {
-                Remove(z);
-                if (Root != null)
-                {
-                    Debug.Assert(Count == 1 + Root.LeftCount + Root.RightCount);
-                }
-                Add(new Node(data));
+                throw new InvalidOperationException("Values must be unique");
             }
             if (Root != null)
             {
@@ -326,7 +321,7 @@ namespace Es.Splay
         {
             var x = LeftMost();
             if (x==null)
-                throw new Exception("Can't find the Best entry in an empty tree");
+                throw new InvalidOperationException("Can't find the Best entry in an empty tree");
             return x.Data;
         }
 
@@ -348,7 +343,7 @@ namespace Es.Splay
                 x = x.Right;
             }
             if (x == null)
-                throw new Exception("Can't find the Woest entry in an empty tree");
+                throw new InvalidOperationException("Can't find the Woest entry in an empty tree");
             return x.Data;
         }
 
