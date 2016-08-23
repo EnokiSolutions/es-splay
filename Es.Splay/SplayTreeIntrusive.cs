@@ -9,9 +9,12 @@ using System.Text;
 
 namespace Es.Splay
 {
+    // The main reasons to support intrusive:
+    // - inline data (technically could be done with struct T's using the normal <T> version)
+    // - multi-index data, as the nodes can be inserted into a Dictionary and indexed via another means (i.e. user id or name)
     public sealed class SplayTreeIntrusive<TN,TV> : ISplayTreeIntrusive<TN,TV> 
         where TV : IComparable<TV>
-        where TN : SplayTreeIntrusive<TN,TV>.Node,new()
+        where TN : SplayTreeIntrusive<TN,TV>.Node
     {
         private const int MaxRecursionDepth = 80;
         public Node Root { get; internal set; }
@@ -41,12 +44,12 @@ namespace Es.Splay
                 Parent = null;
             }
 
-            protected internal Node Copy()
+            protected internal virtual Node Copy()
             {
                 return this;
             }
 
-            protected internal TV Value { get; }
+            protected internal virtual TV Value { get; set; }
         }
 
         public int Count { get; internal set; }
@@ -82,9 +85,9 @@ namespace Es.Splay
         }
 
         [ExcludeFromCodeCoverage]
-        [Conditional("DEBUG")]
-        internal void Validate()
+        public void Validate() // for debugging
         {
+#if DEBUG
             if (Root == null)
                 return;
 
@@ -112,6 +115,7 @@ namespace Es.Splay
 
                 return true;
             });
+#endif
         }
 
         private void Splay(Node x)
@@ -323,8 +327,7 @@ namespace Es.Splay
                     );
             }
 
-            l.Sort();
-            return l;
+            return l.OrderBy(x => x.Value);
         }
         
         public TN Best()
@@ -879,7 +882,7 @@ namespace Es.Splay
 
             // it's now possible our left or right is a 1 count and we still have more to remove so try them.
 
-            if (n.RightCount == 1 && (locked == null || !locked((TN)n.Right)))
+            if (n.RightCount == 1 && (locked == null || n.Right != null && !locked((TN)n.Right)))
             {
                 Debug.Assert(n.Right != null);
                 n.RightCount = 0;
@@ -891,7 +894,7 @@ namespace Es.Splay
             if (toRemove == 0)
                 return removed;
 
-            if (n.LeftCount == 1 && (locked == null || !locked((TN)n.Left)))
+            if (n.LeftCount == 1 && (locked == null || n.Left != null && !locked((TN)n.Left)))
             {
                 Debug.Assert(n.Left != null);
                 n.LeftCount = 0;

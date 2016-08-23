@@ -66,10 +66,10 @@ namespace Es.Splay
             });
         }
 
-        [ExcludeFromCodeCoverage]
-        [Conditional("DEBUG")]
-        internal void Validate()
+        [ExcludeFromCodeCoverage] // for debugging only.
+        public void Validate()
         {
+#if DEBUG
             if (Root == null)
                 return;
 
@@ -97,6 +97,7 @@ namespace Es.Splay
 
                 return true;
             });
+#endif
         }
 
         private void Splay(Node x)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Es.Splay
 {
@@ -13,5 +14,6 @@ namespace Es.Splay
         bool TryGetRank(T data, out int rank);
         int Balance();
         int Prune(int newDesiredCount, Func<T, bool> locked = null);
+        void Validate(); // debugging only
     }
 }

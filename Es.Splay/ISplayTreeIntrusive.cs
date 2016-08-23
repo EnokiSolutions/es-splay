@@ -22,5 +22,6 @@ namespace Es.Splay
         bool Contains(TV item);
         void CopyTo(TV[] array, int arrayIndex);
         void CopyTo(TN[] array, int arrayIndex);
+        void Validate(); // for debugging
     }
 }

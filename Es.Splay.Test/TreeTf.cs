@@ -33,8 +33,6 @@ namespace Es.Splay.Test
                     return c;
                 }
 
-                public ScoreData(long value) : this(value, 0L){}
-
                 public ScoreData(long value, long uid)
                 {
                     Value = value;
@@ -229,19 +227,21 @@ namespace Es.Splay.Test
         [Test]
         public void TestGetEnumerator()
         {
-            var t = new SplayTree<int>();
-            t.Add(1);
-            t.Add(6);
-            t.Add(3);
-            t.Add(4);
-            t.Add(2);
-            t.Add(5);
-            var xs = new HashSet<int>();
-            foreach (int x in (IEnumerable) t)
+            foreach (var t in new ISplayTree<int>[] {new SplayTree<int>(), new SplayTreeViaIntrusive<int>()})
             {
-                xs.Add(x);
+                t.Add(1);
+                t.Add(6);
+                t.Add(3);
+                t.Add(4);
+                t.Add(2);
+                t.Add(5);
+                var xs = new HashSet<int>();
+                foreach (int x in (IEnumerable) t)
+                {
+                    xs.Add(x);
+                }
+                Assert.AreEqual(6, xs.Count);
             }
-            Assert.AreEqual(6,xs.Count);
         }
 
         [Test]
@@ -254,44 +254,56 @@ namespace Es.Splay.Test
             var i = 0;
             foreach (var o in data.Permute())
             {
-                var  t = new SplayTree<Data>();
-                foreach (var n in data)
+                var oa = o.ToArray();
+                foreach (var t in new ISplayTree<Data>[] { new SplayTree<Data>(), new SplayTreeViaIntrusive<Data>() })
                 {
-                    t.Add(dx(n));
-                    t.Validate();
-                }
-                Console.WriteLine($"{t}");
-                Console.Write($"{i:D2}");
-                ++i;
-                var count = data.Length;
-                Assert.AreEqual(t.Count,count);
-
-                var xs = new HashSet<int>(t.Select(x=>x.Score));
-                
-                foreach (var x in o)
-                {
-                    Console.Write($" {x}");
-                    Assert.That(t.Remove(dx(x)));
-                    xs.Remove(x);
-                    Assert.AreEqual(xs.Count,t.Count);
-                    foreach (var xx in t) { Assert.That(xs.Contains(xx.Score));}
-                    t.ForwardOrderTraverse(
-                        dx(-1), 
-                        xx => { Assert.That(xs.Contains(xx.Score));
-                                                             return true;
-                    });
-                    t.ReverseOrderTraverse(
-                        dx(99),
-                        xx => {
-                            Assert.That(xs.Contains(xx.Score));
-                            return true;
-                        });
-                    foreach (var xx in t) { Assert.That(xs.Contains(xx.Score)); }
-                    t.Validate();
-                    --count;
+                    foreach (var n in data)
+                    {
+                        t.Add(dx(n));
+                        t.Validate();
+                    }
+                    Console.WriteLine($"{t}");
+                    Console.Write($"{i:D2}");
+                    ++i;
+                    var count = data.Length;
                     Assert.AreEqual(t.Count, count);
+
+                    var xs = new HashSet<int>(t.Select(x => x.Score));
+
+                    foreach (var x in oa)
+                    {
+                        Console.Write($" {x}");
+                        Assert.That(t.Remove(dx(x)));
+                        xs.Remove(x);
+                        Assert.AreEqual(xs.Count, t.Count);
+                        foreach (var xx in t)
+                        {
+                            Assert.That(xs.Contains(xx.Score));
+                        }
+                        t.ForwardOrderTraverse(
+                            dx(-1),
+                            xx =>
+                            {
+                                Assert.That(xs.Contains(xx.Score));
+                                return true;
+                            });
+                        t.ReverseOrderTraverse(
+                            dx(99),
+                            xx =>
+                            {
+                                Assert.That(xs.Contains(xx.Score));
+                                return true;
+                            });
+                        foreach (var xx in t)
+                        {
+                            Assert.That(xs.Contains(xx.Score));
+                        }
+                        t.Validate();
+                        --count;
+                        Assert.AreEqual(t.Count, count);
+                    }
+                    Console.WriteLine();
                 }
-                Console.WriteLine();
             }
                 
         }
@@ -299,325 +311,334 @@ namespace Es.Splay.Test
         [Test]
         public void TestSplayTree()
         {
-            var t = new SplayTree<Data>();
-
-            const int count = 44;
-
-            var toRemove = new HashSet<int> {0, 3, 7, 31, 43};
-
-            Func<int,Data> dx = x => new Data {Name = $"n{x}", Score = x};
-
-            for (var n = 0; n < count; ++n)
+            foreach (var t in new ISplayTree<Data>[] { new SplayTree<Data>(), new SplayTreeViaIntrusive<Data>() })
             {
-                t.Add(dx(n));
-                t.Validate();
-            }
+                const int count = 44;
 
-            foreach (var n in toRemove)
-            {
-                Console.WriteLine($"t {t}");
-                var removeResult = t.Remove(dx(n));
-                Assert.IsTrue(removeResult);
-                Console.WriteLine($"Removed {n}");
-                var arg0 = t.ToString();
-                if (arg0.Contains("CYCLE"))
+                var toRemove = new HashSet<int> {0, 3, 7, 31, 43};
+
+                Func<int, Data> dx = x => new Data {Name = $"n{x}", Score = x};
+
+                for (var n = 0; n < count; ++n)
                 {
-                    Console.WriteLine($"{arg0}");
-                    Assert.Fail();
+                    t.Add(dx(n));
+                    t.Validate();
                 }
-                t.Validate();
-            }
 
-            foreach (var n in toRemove)
-            {
-                Assert.IsFalse(t.Remove(dx(n)));
-                t.Validate();
-            }
+                foreach (var n in toRemove)
+                {
+                    Console.WriteLine($"t {t}");
+                    var removeResult = t.Remove(dx(n));
+                    Assert.IsTrue(removeResult);
+                    Console.WriteLine($"Removed {n}");
+                    var arg0 = t.ToString();
+                    if (arg0.Contains("CYCLE"))
+                    {
+                        Console.WriteLine($"{arg0}");
+                        Assert.Fail();
+                    }
+                    t.Validate();
+                }
 
-            var expectedRank = 0;
-            var expectedRanks = new int[count];
+                foreach (var n in toRemove)
+                {
+                    Assert.IsFalse(t.Remove(dx(n)));
+                    t.Validate();
+                }
 
-            for (var n = 0; n < count; ++n)
-            {
-                int rank;
-                var data = dx(n);
-                if (toRemove.Contains(n))
+                var expectedRank = 0;
+                var expectedRanks = new int[count];
+
+                for (var n = 0; n < count; ++n)
                 {
-                    Assert.IsFalse(t.TryGetRank(data, out rank));
-                    expectedRanks[n] = -1;
+                    int rank;
+                    var data = dx(n);
+                    if (toRemove.Contains(n))
+                    {
+                        Assert.IsFalse(t.TryGetRank(data, out rank));
+                        expectedRanks[n] = -1;
+                    }
+                    else
+                    {
+                        Assert.IsTrue(t.TryGetRank(data, out rank));
+                        expectedRanks[n] = expectedRank;
+                        ++expectedRank;
+                        Assert.AreEqual(expectedRanks[n], rank);
+                    }
                 }
-                else
+                for (var n = 0; n < count; ++n)
                 {
-                    Assert.IsTrue(t.TryGetRank(data, out rank));
-                    expectedRanks[n] = expectedRank;
-                    ++expectedRank;
-                    Assert.AreEqual(expectedRanks[n], rank);
+                    int rank;
+                    if (toRemove.Contains(n))
+                    {
+                        Assert.IsFalse(t.TryGetRank(dx(n), out rank));
+                    }
+                    else
+                    {
+                        Assert.IsTrue(t.TryGetRank(dx(n), out rank));
+                        Assert.AreEqual(expectedRanks[n], rank);
+                    }
                 }
-            }
-            for (var n = 0; n < count; ++n)
-            {
-                int rank;
-                if (toRemove.Contains(n))
+
+                foreach (var n in toRemove)
                 {
-                    Assert.IsFalse(t.TryGetRank(dx(n), out rank));
+                    t.Add(dx(n));
+                    t.Validate();
                 }
-                else
+
+                for (var n = 0; n < count; ++n)
                 {
+                    int rank;
                     Assert.IsTrue(t.TryGetRank(dx(n), out rank));
-                    Assert.AreEqual(expectedRanks[n], rank);
+                    Assert.AreEqual(n, rank);
                 }
-            }
 
-            foreach (var n in toRemove)
-            {
-                t.Add(dx(n));
+                int startRank;
+
+                var data1 = dx(33);
+                Assert.IsTrue(t.TryGetRank(data1, out startRank));
+                var l = t.NearBy(data1, 2, 2).ToList();
                 t.Validate();
+
+                Console.WriteLine("near (2 on either size) 33: {1} [{0}]",
+                    string.Join(", ", l.Select(x => x.ToString())),
+                    startRank);
+                Assert.AreEqual(33, startRank);
+                Assert.AreEqual(5, l.Count);
+                Assert.AreEqual(31, l[0].Score);
+                Assert.AreEqual(32, l[1].Score);
+                Assert.AreEqual(33, l[2].Score);
+                Assert.AreEqual(34, l[3].Score);
+                Assert.AreEqual(35, l[4].Score);
+
+                data1 = dx(42);
+                Assert.IsTrue(t.TryGetRank(data1, out startRank));
+                l = t.NearBy(data1, 2, 2).ToList();
+                t.Validate();
+                Console.WriteLine("near (2 on either size) 42: {1} [{0}]",
+                    string.Join(", ", l.Select(x => x.ToString())), startRank);
+                Assert.AreEqual(42, startRank);
+                Assert.AreEqual(4, l.Count);
+                Assert.AreEqual(40, l[0].Score);
+                Assert.AreEqual(41, l[1].Score);
+                Assert.AreEqual(42, l[2].Score);
+                Assert.AreEqual(43, l[3].Score);
+
+                data1 = dx(-1);
+                l = t.NearBy(data1, 2, 2).ToList();
+                t.Validate();
+                Console.WriteLine("near (2 on either size) -1: {1} [{0}]",
+                    string.Join(", ", l.Select(x => x.ToString())), startRank);
+                Assert.AreEqual(3, l.Count);
+                Assert.AreEqual(0, l[0].Score);
+                Assert.AreEqual(1, l[1].Score);
+                Assert.AreEqual(2, l[2].Score);
+
+                data1 = dx(999);
+                l = t.NearBy(data1, 2, 2).ToList();
+                t.Validate();
+                Console.WriteLine("near (1 on either size) 999: {1} [{0}]",
+                    string.Join(", ", l.Select(x => x.ToString())), startRank);
+                Assert.AreEqual(3, l.Count);
+                Assert.AreEqual(41, l[0].Score);
+                Assert.AreEqual(42, l[1].Score);
+                Assert.AreEqual(43, l[2].Score);
+
+                Console.WriteLine(
+                    "--remove------------------------------------------------------------------------------------");
+                t.Remove(dx(25)); // tests a specific hard to get to case in Remove
+                t.Validate();
+
+                t.Add(dx(100));
+                t.Validate();
+                t.Add(dx(101));
+                t.Validate();
+                t.Add(dx(102));
+                t.Validate();
+                t.Add(dx(103));
+                t.Validate();
+                t.Add(dx(104));
+                t.Validate();
+                t.Add(dx(105));
+                t.Validate();
+
+                data1 = dx(33);
+                Assert.IsTrue(t.TryGetRank(data1, out startRank));
+                l = t.NearBy(data1, 2, 2).ToList();
+                t.Validate();
+
+                Console.WriteLine("near (2 on either size) 33: {1} [{0}]",
+                    string.Join(", ", l.Select(x => x.ToString())), startRank);
+
+                Assert.AreEqual(32, startRank);
+                Assert.AreEqual(5, l.Count);
+                Assert.AreEqual(31, l[0].Score);
+                Assert.AreEqual(32, l[1].Score);
+                Assert.AreEqual(33, l[2].Score);
+                Assert.AreEqual(34, l[3].Score);
+                Assert.AreEqual(35, l[4].Score);
+
+                data1 = dx(33);
+                Assert.IsTrue(t.TryGetRank(data1, out startRank));
+                l = t.NearBy(data1, 2, 2).ToList();
+                t.Validate();
+                Console.WriteLine("near (2 on either size) id 33: {1} [{0}]",
+                    string.Join(", ", l.Select(x => x.ToString())),
+                    startRank);
+                Assert.AreEqual(32, startRank);
+                Assert.AreEqual(5, l.Count);
+                Assert.AreEqual(31, l[0].Score);
+                Assert.AreEqual(32, l[1].Score);
+                Assert.AreEqual(33, l[2].Score);
+                Assert.AreEqual(34, l[3].Score);
+                Assert.AreEqual(35, l[4].Score);
+
+                Assert.AreEqual(t.Count, t.Count());
+
+                var worst = t.Worst();
+                Assert.AreEqual(105, worst.Score);
+
+                var best = t.Best();
+                Assert.AreEqual(0, best.Score);
+
+                t.Clear();
+                t.ForwardOrderTraverse(data1, _ =>
+                {
+                    Assert.Fail();
+                    return true;
+                });
+                t.ReverseOrderTraverse(data1, _ =>
+                {
+                    Assert.Fail();
+                    return true;
+                });
             }
-
-            for (var n = 0; n < count; ++n)
-            {
-                int rank;
-                Assert.IsTrue(t.TryGetRank(dx(n), out rank));
-                Assert.AreEqual(n, rank);
-            }
-
-            int startRank;
-
-            var data1 = dx(33);
-            Assert.IsTrue(t.TryGetRank(data1,out startRank));
-            var l = t.NearBy(data1, 2, 2).ToList();
-            t.Validate();
-
-            Console.WriteLine("near (2 on either size) 33: {1} [{0}]",
-                string.Join(", ", l.Select(x => x.ToString())),
-                startRank);
-            Assert.AreEqual(33, startRank);
-            Assert.AreEqual(5, l.Count);
-            Assert.AreEqual(31, l[0].Score);
-            Assert.AreEqual(32, l[1].Score);
-            Assert.AreEqual(33, l[2].Score);
-            Assert.AreEqual(34, l[3].Score);
-            Assert.AreEqual(35, l[4].Score);
-
-            data1 = dx(42);
-            Assert.IsTrue(t.TryGetRank(data1, out startRank));
-            l = t.NearBy(data1,2,2).ToList();
-            t.Validate();
-            Console.WriteLine("near (2 on either size) 42: {1} [{0}]", string.Join(", ", l.Select(x => x.ToString())), startRank);
-            Assert.AreEqual(42, startRank);
-            Assert.AreEqual(4, l.Count);
-            Assert.AreEqual(40, l[0].Score);
-            Assert.AreEqual(41, l[1].Score);
-            Assert.AreEqual(42, l[2].Score);
-            Assert.AreEqual(43, l[3].Score);
-
-            data1 = dx(-1);
-            l = t.NearBy(data1, 2, 2).ToList();
-            t.Validate();
-            Console.WriteLine("near (2 on either size) -1: {1} [{0}]",string.Join(", ", l.Select(x => x.ToString())),startRank);
-            Assert.AreEqual(3, l.Count);
-            Assert.AreEqual(0, l[0].Score);
-            Assert.AreEqual(1, l[1].Score);
-            Assert.AreEqual(2, l[2].Score);
-
-            data1 = dx(999);
-            l = t.NearBy(data1, 2, 2).ToList();
-            t.Validate();
-            Console.WriteLine("near (1 on either size) 999: {1} [{0}]", string.Join(", ", l.Select(x => x.ToString())), startRank);
-            Assert.AreEqual(3, l.Count);
-            Assert.AreEqual(41, l[0].Score);
-            Assert.AreEqual(42, l[1].Score);
-            Assert.AreEqual(43, l[2].Score);
-
-            Console.WriteLine(
-                "--remove------------------------------------------------------------------------------------");
-            t.Remove(dx(25)); // tests a specific hard to get to case in Remove
-            t.Validate();
-
-            t.Add(dx(100));
-            t.Validate();
-            t.Add(dx(101));
-            t.Validate();
-            t.Add(dx(102));
-            t.Validate();
-            t.Add(dx(103));
-            t.Validate();
-            t.Add(dx(104));
-            t.Validate();
-            t.Add(dx(104));
-            t.Validate();
-            t.Add(dx(105));
-            t.Validate();
-
-            data1 = dx(33);
-            Assert.IsTrue(t.TryGetRank(data1, out startRank));
-            l = t.NearBy(data1,2,2).ToList();
-            t.Validate();
-
-            Console.WriteLine("near (2 on either size) 33: {1} [{0}]", string.Join(", ", l.Select(x => x.ToString())), startRank);
-
-            Assert.AreEqual(32, startRank);
-            Assert.AreEqual(5, l.Count);
-            Assert.AreEqual(31, l[0].Score);
-            Assert.AreEqual(32, l[1].Score);
-            Assert.AreEqual(33, l[2].Score);
-            Assert.AreEqual(34, l[3].Score);
-            Assert.AreEqual(35, l[4].Score);
-
-            data1 = dx(33);
-            Assert.IsTrue(t.TryGetRank(data1, out startRank));
-            l = t.NearBy(data1, 2, 2).ToList();
-            t.Validate();
-            Console.WriteLine("near (2 on either size) id 33: {1} [{0}]",
-                string.Join(", ", l.Select(x => x.ToString())),
-                startRank);
-            Assert.AreEqual(32, startRank);
-            Assert.AreEqual(5, l.Count);
-            Assert.AreEqual(31, l[0].Score);
-            Assert.AreEqual(32, l[1].Score);
-            Assert.AreEqual(33, l[2].Score);
-            Assert.AreEqual(34, l[3].Score);
-            Assert.AreEqual(35, l[4].Score);
-
-            Assert.AreEqual(t.Count, t.Count());
-
-            var worst = t.Worst();
-            Assert.AreEqual(105, worst.Score);
-
-            var best = t.Best();
-            Assert.AreEqual(0, best.Score);
-
-            t.Clear();
-            t.ForwardOrderTraverse(data1, _ =>
-            {
-                Assert.Fail();
-                return true;
-            });
-            t.ReverseOrderTraverse(data1, _ =>
-            {
-                Assert.Fail();
-                return true;
-            });
         }
 
         [Test]
         public void TestTreeBalance()
         {
-            ISplayTree<Data> t = new SplayTree<Data>();
-            const int count = 32;
-
-            for (var i = 0; i < count; ++i)
+            foreach (var t in new ISplayTree<Data>[] { new SplayTree<Data>(), new SplayTreeViaIntrusive<Data>() })
             {
-                t.Add(new Data {Name = $"n{i}", Score = i});
-            }
-            t.Balance();
-            var balanced = t.ToString();
-            const int newDesiredCount = 15;
-            var removed = t.Prune(newDesiredCount);
-            Assert.AreEqual(count - newDesiredCount, removed);
-            var pruned = t.ToString();
+                const int count = 32;
 
-            Console.WriteLine(balanced);
-            Console.WriteLine(pruned);
+                for (var i = 0; i < count; ++i)
+                {
+                    t.Add(new Data {Name = $"n{i}", Score = i});
+                }
+                t.Balance();
+                var balanced = t.ToString();
+                const int newDesiredCount = 15;
+                var removed = t.Prune(newDesiredCount);
+                Assert.AreEqual(count - newDesiredCount, removed);
+                var pruned = t.ToString();
+
+                Console.WriteLine(balanced);
+                Console.WriteLine(pruned);
+            }
         }
 
         [Test]
         public void TestPerf()
         {
-            ISplayTree<Data> t = new SplayTree<Data>();
-            const int count = 200000;
-
-            for (var i = 0; i < count; ++i)
+            foreach (var t in new ISplayTree<Data>[] { new SplayTree<Data>(), new SplayTreeViaIntrusive<Data>() })
             {
-                t.Add(new Data {Name = "n" + i, Score = i});
-            }
-            var sw = Stopwatch.StartNew();
-            var h = t.Balance();
-            var balanceTime = sw.ElapsedMilliseconds;
-            sw.Restart();
-            var h2 = t.Balance();
-            var balanceTime2 = sw.ElapsedMilliseconds;
-            var j = 0;
-            var srs = new int[20];
-            var rs = new IList<Data>[20];
-            sw.Restart();
-            for (var n = 40000; n < 60000; n += 1000)
-            {
-                var data = new Data {Name = $"n{n}", Score = n};
-                int rank;
-                Assert.IsTrue(t.TryGetRank(data, out rank));
+                const int count = 200000;
 
-                srs[j] = rank;
-                rs[j] = t.NearBy(data, 0, 200).ToList();
-                ++j;
-            }
-            sw.Stop();
-            Console.WriteLine(
-                $"balance {balanceTime}ms h={h}, rebalance {balanceTime2}ms h={h2}, avg query time {sw.ElapsedMilliseconds/j}ms");
-            j = 0;
-            foreach (var r in rs)
-            {
-                Console.WriteLine($"{j} -> {string.Join(",", r.Select(x => x.Score))}");
-                ++j;
-            }
+                for (var i = 0; i < count; ++i)
+                {
+                    t.Add(new Data {Name = "n" + i, Score = i});
+                }
+                var sw = Stopwatch.StartNew();
+                var h = t.Balance();
+                var balanceTime = sw.ElapsedMilliseconds;
+                sw.Restart();
+                var h2 = t.Balance();
+                var balanceTime2 = sw.ElapsedMilliseconds;
+                var j = 0;
+                var srs = new int[20];
+                var rs = new IList<Data>[20];
+                sw.Restart();
+                for (var n = 40000; n < 60000; n += 1000)
+                {
+                    var data = new Data {Name = $"n{n}", Score = n};
+                    int rank;
+                    Assert.IsTrue(t.TryGetRank(data, out rank));
 
-            sw.Restart();
-            var initialCount = t.Count;
-            var removed = t.Prune(initialCount/2);
-            sw.Stop();
+                    srs[j] = rank;
+                    rs[j] = t.NearBy(data, 0, 200).ToList();
+                    ++j;
+                }
+                sw.Stop();
+                Console.WriteLine(
+                    $"balance {balanceTime}ms h={h}, rebalance {balanceTime2}ms h={h2}, avg query time {sw.ElapsedMilliseconds/j}ms");
+                j = 0;
+                foreach (var r in rs)
+                {
+                    Console.WriteLine($"{j} -> {string.Join(",", r.Select(x => x.Score))}");
+                    ++j;
+                }
 
-            Console.WriteLine(
-                $"prune {sw.ElapsedMilliseconds}ms initialCount={initialCount}, removed={removed}, finalCount={t.Count}");
+                sw.Restart();
+                var initialCount = t.Count;
+                var removed = t.Prune(initialCount/2);
+                sw.Stop();
+
+                Console.WriteLine(
+                    $"prune {sw.ElapsedMilliseconds}ms initialCount={initialCount}, removed={removed}, finalCount={t.Count}");
+            }
         }
 
         [Test]
         public void TestPerfVsHashset()
         {
-            ISplayTree<int> t = new SplayTree<int>();
-            ISet<int> h = new HashSet<int>();
-            const int sn = 100;
-            const int count = 1000*sn;
+            foreach (var t in new ISplayTree<int>[] { new SplayTree<int>(), new SplayTreeViaIntrusive<int>() })
+            {
+                ISet<int> h = new HashSet<int>();
+                const int sn = 1;
+                const int count = 1000*sn;
 
-            var sw = Stopwatch.StartNew();
-            var j = 0;
+                var sw = Stopwatch.StartNew();
+                var j = 0;
 
-            sw.Restart();
-            for (var i = 0; i < count * sn; ++i)
-            {
-                t.Add(i);
-                ++j;
+                sw.Restart();
+                for (var i = 0; i < count*sn; ++i)
+                {
+                    t.Add(i);
+                    ++j;
+                }
+                sw.Stop();
+                Console.WriteLine($"splay tree {j} adds, avg time {(double) sw.ElapsedMilliseconds/j}ms");
+                j = 0;
+                sw.Restart();
+                for (var i = 0; i < count*sn; ++i)
+                {
+                    h.Add(i);
+                    ++j;
+                }
+                sw.Stop();
+                Console.WriteLine($"hash set {j} adds, avg time {(double) sw.ElapsedMilliseconds/j}ms");
+                j = 0;
+                sw.Restart();
+                t.Balance();
+                for (var n = 400*sn; n < 600*sn; n += 1)
+                {
+                    int r;
+                    t.TryGetRank(n, out r);
+                    ++j;
+                }
+                sw.Stop();
+                Console.WriteLine($"splay tree {j} queries, avg query time {(double) sw.ElapsedMilliseconds/j}ms");
+                j = 0;
+                sw.Restart();
+                for (var n = 400*sn; n < 600*sn; n += 1)
+                {
+                    var b = h.Contains(n);
+                    ++j;
+                }
+                sw.Stop();
+                Console.WriteLine($"hash {j} queries, avg query time {(double) sw.ElapsedMilliseconds/j}ms");
             }
-            sw.Stop();
-            Console.WriteLine($"splay tree {j} adds, avg time {(double)sw.ElapsedMilliseconds / j}ms");
-            j = 0;
-            sw.Restart();
-            for (var i = 0; i < count * sn; ++i)
-            {
-                h.Add(i);
-                ++j;
-            }
-            sw.Stop();
-            Console.WriteLine($"hash set {j} adds, avg time {(double)sw.ElapsedMilliseconds / j}ms");
-            j = 0;
-            sw.Restart();
-            t.Balance();
-            for (var n = 400*sn; n < 600*sn; n += 1)
-            {
-                int r;
-                t.TryGetRank(n, out r);
-                ++j;
-            }
-            sw.Stop();
-            Console.WriteLine($"splay tree {j} queries, avg query time {(double)sw.ElapsedMilliseconds / j}ms");
-            j = 0;
-            sw.Restart();
-            for (var n = 400*sn; n < 600*sn; n += 1)
-            {
-               var b = h.Contains(n);
-                ++j;
-            }
-            sw.Stop();
-            Console.WriteLine($"hash {j} queries, avg query time {(double)sw.ElapsedMilliseconds / j}ms");
         }
     }
 }
