@@ -24,6 +24,9 @@ namespace Es.Splay.Test
                 public long Uid;
                 public int CompareTo(ScoreData other)
                 {
+                    if (ReferenceEquals(this, other))
+                        return 0;
+
                     var c = Value.CompareTo(other.Value);
                     if (c != 0)
                         return c;
@@ -39,6 +42,8 @@ namespace Es.Splay.Test
                     Uid = uid;
                 }
             }
+
+            protected internal override ScoreData Value { get { return Score; } }
         }
 
         private sealed class Data : IComparable<Data>
@@ -118,6 +123,7 @@ namespace Es.Splay.Test
         public void TestComplexRemoveCaseIntrusive()
         {
             var t = new SplayTreeIntrusive<DataNode,DataNode.ScoreData>();
+            Assert.AreEqual(0, t.NearBy(null,0,0).Count());
             var zL = new DataNode
             {
                 Name = "zL",
@@ -176,6 +182,12 @@ namespace Es.Splay.Test
                 p = (DataNode)q;
                 return r;
             });
+
+            var xs = new DataNode[t.Count];
+            t.CopyTo(xs,0);
+            var s = string.Join("", xs.Select(x => x.Name));
+            Console.WriteLine(s);
+            Assert.AreEqual(s,"zLuuRozR");
         }
 
         [Test]
@@ -229,6 +241,7 @@ namespace Es.Splay.Test
         public void TestIntrusiveEdgeCases()
         {
             var tc = new SplayTreeViaIntrusive<Data>();
+
             var t = tc as ISplayTree<Data>;
             var s = t.ToString(); // doesn't throw on empty tree 
             t.Prune(0);
@@ -291,6 +304,44 @@ namespace Es.Splay.Test
                     xs.Add(x);
                 }
                 Assert.AreEqual(6, xs.Count);
+                var ar = new int[6];
+                t.CopyTo(ar,0);
+                foreach (var i in ar)
+                {
+                    Assert.That(xs.Contains(i));
+                }
+                Assert.That(!t.IsReadOnly);
+                foreach (var i in xs)
+                {
+                    Assert.That(t.Contains(i));
+                }
+                Assert.That(!t.Contains(44));
+            }
+        }
+
+        [Test]
+        public void TestGetEnumeratorIntrusive()
+        {
+            var t = new SplayTreeIntrusive<DataNode,DataNode.ScoreData>();
+            {
+                t.Add(new DataNode { Score = new DataNode.ScoreData(1, 1) });
+                t.Add(new DataNode { Score = new DataNode.ScoreData(6, 2) });
+                t.Add(new DataNode { Score = new DataNode.ScoreData(3, 3) });
+                t.Add(new DataNode { Score = new DataNode.ScoreData(4, 4) });
+                t.Add(new DataNode { Score = new DataNode.ScoreData(2, 5) });
+                t.Add(new DataNode { Score = new DataNode.ScoreData(5, 6) });
+                var xs = new HashSet<long>();
+                foreach (DataNode x in (IEnumerable)t)
+                {
+                    xs.Add(x.Value.Value);
+                }
+                Assert.AreEqual(6, xs.Count);
+                var ar = new DataNode[6];
+                t.CopyTo(ar, 0);
+                foreach (var n in ar)
+                {
+                    Assert.That(xs.Contains(n.Value.Value));
+                }
             }
         }
 

@@ -49,7 +49,7 @@ namespace Es.Splay
                 return this;
             }
 
-            protected internal virtual TV Value { get; set; }
+            protected internal abstract TV Value { get; }
         }
 
         public int Count { get; internal set; }

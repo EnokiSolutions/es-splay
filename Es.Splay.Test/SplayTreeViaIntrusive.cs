@@ -1,12 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace Es.Splay
+namespace Es.Splay.Test
 {
     // Example of using Intrusive, and usefull for testing Intrusive using the same tests as the <T> style tree.
-    public sealed class SplayTreeViaIntrusive<T> : ISplayTreeIntrusive<SplayTreeViaIntrusive<T>.Node, T>, ISplayTree<T> where T:IComparable<T>
+    [ExcludeFromCodeCoverage]
+    internal sealed class SplayTreeViaIntrusive<T> : ISplayTree<T> where T:IComparable<T>
     {
         private readonly SplayTreeIntrusive<Node, T> _t = new SplayTreeIntrusive<Node, T>();
 
@@ -16,7 +18,7 @@ namespace Es.Splay
             {
                 Value = value;
             }
-            protected internal override T Value { get; set; }
+            protected internal override T Value { get; }
             protected internal override SplayTreeIntrusive<Node, T>.Node Copy()
             {
                 return new Node(Value);
@@ -27,42 +29,12 @@ namespace Es.Splay
         {
             return _t.Select(x=>x.Value).GetEnumerator();
         }
-
-        IEnumerator<Node> IEnumerable<Node>.GetEnumerator()
-        {
-            return _t.GetEnumerator();
-        }
-
+        
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _t.Select(x => x.Value).GetEnumerator();
         }
-
-        void ISplayTreeIntrusive<Node, T>.Add(Node n)
-        {
-            _t.Add(n);
-        }
-
-        void ISplayTreeIntrusive<Node, T>.Remove(Node n)
-        {
-            _t.Remove(n);
-        }
-
-        Node ISplayTreeIntrusive<Node, T>.Find(T v)
-        {
-            return _t.Find(v);
-        }
-
-        Node ISplayTreeIntrusive<Node, T>.FindNear(T v)
-        {
-            return _t.FindNear(v);
-        }
-
-        IEnumerable<Node> ISplayTreeIntrusive<Node, T>.NearBy(Node n, int before, int after)
-        {
-            return _t.NearBy(n, before, after);
-        }
-
+        
         IEnumerable<T> ISplayTree<T>.NearBy(T data, int before, int after)
         {
             var findNear = _t.FindNear(data);
@@ -129,42 +101,7 @@ namespace Es.Splay
         {
             _t.Validate();
         }
-
-        Node ISplayTreeIntrusive<Node, T>.Best()
-        {
-            return _t.Best();
-        }
-
-        Node ISplayTreeIntrusive<Node, T>.Worst()
-        {
-            return _t.Worst();
-        }
-
-        void ISplayTreeIntrusive<Node, T>.ForwardOrderTraverse(Node n, Func<Node, bool> f)
-        {
-            _t.ForwardOrderTraverse(n, f);
-        }
-
-        void ISplayTreeIntrusive<Node, T>.ReverseOrderTraverse(Node n, Func<Node, bool> f)
-        {
-            _t.ReverseOrderTraverse(n, f);
-        }
-
-        int ISplayTreeIntrusive<Node, T>.Rank(Node n)
-        {
-            return _t.Rank(n);
-        }
-
-        int ISplayTreeIntrusive<Node, T>.Balance()
-        {
-            return _t.Balance();
-        }
-
-        int ISplayTreeIntrusive<Node, T>.Prune(int newDesiredCount, Func<Node, bool> locked)
-        {
-            return _t.Prune(newDesiredCount, locked);
-        }
-
+        
         void ICollection<T>.Add(T item)
         {
             _t.Add(new Node(item));
@@ -202,32 +139,10 @@ namespace Es.Splay
 
         bool ICollection<T>.IsReadOnly => false;
 
-        void ISplayTreeIntrusive<Node, T>.Clear()
-        {
-            _t.Clear();
-        }
-
-        int ISplayTreeIntrusive<Node, T>.Count => _t.Count;
-
         internal Node Root
         {
             get { return (Node) _t.Root; }
             set { _t.Root = value; }
-        }
-
-        bool ISplayTreeIntrusive<Node, T>.Contains(T item)
-        {
-            return _t.Contains(item);
-        }
-
-        void ISplayTreeIntrusive<Node, T>.CopyTo(T[] array, int arrayIndex)
-        {
-            _t.CopyTo(array, arrayIndex);
-        }
-
-        void ISplayTreeIntrusive<Node, T>.CopyTo(Node[] array, int arrayIndex)
-        {
-            _t.CopyTo(array, arrayIndex);
         }
 
         internal void Traverse(Node node, Func<Node, bool> func)
